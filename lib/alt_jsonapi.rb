@@ -1,4 +1,5 @@
 require "alt_jsonapi/version"
+require "alt_jsonapi/aux/converters"
 require "alt_jsonapi/serializer"
 require "alt_jsonapi/polymorphic_serializer"
 require "active_support/inflector"

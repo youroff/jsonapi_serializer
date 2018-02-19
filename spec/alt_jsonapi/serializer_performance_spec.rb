@@ -6,8 +6,8 @@ describe AltJsonapi::Serializer do
     let(:movies) { build_movies(1000) }
   end
 
-  before(:all) { GC.disable }
-  after(:all) { GC.enable }
+  # before(:all) { GC.disable }
+  # after(:all) { GC.enable }
 
   context "fast" do
     include_context "fast serializers"
