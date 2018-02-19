@@ -37,7 +37,7 @@ module AltJsonapi::Serializer
   def relationships_hash(record, context = {})
     @relationships.each_with_object({}) do |(key, type, from, serializer), hash|
       if rel = record.public_send(from)
-        if rel.is_a?(Array)
+        if rel.respond_to?(:each)
           hash[key] = {data: []}
           rel.each do |item|
             id = serializer.id_hash(item)

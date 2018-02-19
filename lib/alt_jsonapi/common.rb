@@ -18,7 +18,7 @@ module AltJsonapi::Common
     hash = {}
     context = {tracker: {}, included: []}
 
-    if payload.is_a? Array
+    if payload.respond_to?(:map)
       hash[:data] = payload.map { |p| record_hash(p, context) }
     else
       hash[:data] = record_hash(payload, context)
