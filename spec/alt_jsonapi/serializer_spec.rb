@@ -8,15 +8,23 @@ describe AltJsonapi::Serializer do
       attribute :d do |object|
         object.e
       end
+
+      attribute :x do |object|
+        do_calc(object.x)
+      end
+
+      def self.do_calc(x)
+        x * 2
+      end
     end
 
-    @record = OpenStruct.new(id: 1, a: :a, c: :b, e: :d)
+    @record = OpenStruct.new(id: 1, a: :a, c: :b, e: :d, x: 2)
   }
 
   after(:each) { Object.send(:remove_const, "ASerializer") }
 
   it "serializes parts properly" do
-    hash = ASerializer.new.serializable_hash(@record)
+    hash = ASerializer.new(fields: {a: [:a, :b, :d]}).serializable_hash(@record)
     expect(hash[:data]).to include(id: "1", type: :a, attributes: Hash[[:a, :b, :d].map {|x| [x, x]}])
   end
 
@@ -50,7 +58,7 @@ describe AltJsonapi::Serializer do
       belongs_to :y
     end
 
-    serializer = ASerializer.new(fields: {x: ["z"]}, include: "xs")
+    serializer = ASerializer.new(fields: {x: ["z"], a: [:xs, :y]}, include: "xs")
     @record.xs = (1..2).map do |i|
       OpenStruct.new(id: i, z: "x#{i}", ignored: "never mind")
     end

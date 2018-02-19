@@ -5,6 +5,7 @@ require "alt_jsonapi/polymorphic_serializer"
 require "active_support/inflector"
 
 module AltJsonapi
+  extend AltJsonapi::AUX::Converters
 
   TRANSFORMS = {
     dasherize: lambda { |str| str.to_s.underscore.dasherize.to_sym },

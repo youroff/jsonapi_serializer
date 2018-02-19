@@ -101,6 +101,15 @@ class MovieSerializer
   attribute :rating do |movie|
     "%.2g" % (movie.rating / 10.0)
   end
+
+  # you can call class methods of serializer to split complex calculations
+  attribute :comlex_attribute do |movie|
+    do_heavy_calc(movie)
+  end
+
+  def self.do_heavy_calc(movie)
+    #...
+  end
 end
 ```
 

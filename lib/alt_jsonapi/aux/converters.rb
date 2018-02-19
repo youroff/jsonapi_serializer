@@ -3,7 +3,7 @@ module AltJsonapi::AUX
 
     # http://jsonapi.org/format/#fetching-includes
     # This method converts include string into hash accepted by serializer
-    def self.convert_include(include_string)
+    def convert_include(include_string)
       include_string.split(",").each_with_object({}) do |path, includes|
         path.split(".").reduce(includes) do |ref, segment|
           ref[segment.to_sym] ||= {}
@@ -13,7 +13,7 @@ module AltJsonapi::AUX
     end
 
     # http://jsonapi.org/format/#fetching-sparse-fieldsets
-    def self.convert_fields(fields)
+    def convert_fields(fields)
       Hash[fields.map do |type, fields|
         [type.to_sym, fields.split(",").map(&:to_sym)]
       end]
