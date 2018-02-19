@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "alt_jsonapi"
+require "./perf/runner"
+require "./perf/alt_jsonapi_test"
+require "./perf/fast_jsonapi_test"
+GC.disable
+
+runner = Runner.new(10_000)
+runner.set_modules(AltJsonapiTest, FastJsonapiTest)
+runner.set_tests(:base, :with_included)
+runner.set_takes(10, 100, 1000, 10_000)
+runner.run
+
+print "\n"
+print "### Base case\n"
+print "\n"
+runner.print_table(:base)
+print "\n"
+print "### With includes\n"
+print "\n"
+runner.print_table(:with_included)
