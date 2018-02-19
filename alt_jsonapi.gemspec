@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{Alternative JSONApi serializer}
   spec.description   = %q{Alternative JSONApi serializer inspired by Netflix's fast_jsonapi serializer}
-  spec.homepage      = "TODO: N/A"
+  spec.homepage      = "https://github.com/youroff/alt_jsonapi"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
