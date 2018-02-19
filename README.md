@@ -1,4 +1,5 @@
 # Alt JSON API
+[![Build Status](https://travis-ci.org/youroff/alt_jsonapi.svg?branch=master)](https://travis-ci.org/youroff/alt_jsonapi)
 
 JSONApi serializer for Ruby objects. Inspired by [Fast JSON API](https://github.com/Netflix/fast_jsonapi).
 
