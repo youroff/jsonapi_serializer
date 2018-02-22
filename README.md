@@ -19,6 +19,7 @@ JSONApi serializer for Ruby objects. Inspired by [Fast JSON API](https://github.
 Add this line to your application's Gemfile:
 
 ```ruby
+gem 'oj'
 gem 'jsonapi_serializer'
 ```
 
