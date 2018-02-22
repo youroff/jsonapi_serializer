@@ -82,8 +82,8 @@ JsonapiSerializer.set_type_namespace_separator :ignore
 
 # The default option is "_"
 # Bear in mind that only " " (space), "_" and "-" or any combination of these
-# are allowed as per json-api spec and attempt to set anything else
-# will cause an error.   
+# are allowed as per json-api spec, but in practice you can use other symbols if you
+# make sure to escape them while using in urls.
 ```
 
 ### Attributes configuration
