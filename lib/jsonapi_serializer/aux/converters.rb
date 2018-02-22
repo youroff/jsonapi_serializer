@@ -1,4 +1,4 @@
-module AltJsonapi::AUX
+module JsonapiSerializer::AUX
   module Converters
 
     # http://jsonapi.org/format/#fetching-includes

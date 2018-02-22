@@ -1,7 +1,7 @@
 require 'active_support/concern'
 require 'active_support/inflector'
 
-module AltJsonapi::DSL
+module JsonapiSerializer::DSL
   module Common
     extend ActiveSupport::Concern
 
@@ -65,7 +65,7 @@ module AltJsonapi::DSL
       end
 
       def inherited(subclass)
-        raise "You attempted to inherit regular serializer class, if you want to create Polymorphic serializer, include PolymorphicSerializer mixin"
+        raise "You attempted to inherit regular serializer class, if you want to create Polymorphic serializer, include Polymorphic mixin"
       end
 
       private

@@ -52,28 +52,28 @@ class Character
     @name = FFaker::Name.name
   end
 end
-
-class Villain < Character
-  attr_accessor :kills
-  def initialize(id)
-    super(id)
-    @kills = rand(20)
-  end
-end
-
-class Hero < Character
-  attr_accessor :kills
-  def initialize(id)
-    super(id)
-    @kills = rand(20)
-  end
-end
+#
+# class Villain < Character
+#   attr_accessor :kills
+#   def initialize(id)
+#     super(id)
+#     @kills = rand(20)
+#   end
+# end
+#
+# class Hero < Character
+#   attr_accessor :kills
+#   def initialize(id)
+#     super(id)
+#     @kills = rand(20)
+#   end
+# end
 
 class Models
   def initialize(count)
     consultant_pool = (1..50).map { |id| Consultant.new(id) }
     author_pool = (1..50).map { |id| Author.new(id, consultant_pool) }
-    character_pool = (1..300).map { |id| [Hero, Villain].sample.new(id) }
+    character_pool = (1..300).map { |id| Character.new(id) }
 
     @storage = (1..count).map do |id|
       Book.new(id, character_pool: character_pool, author_pool: author_pool)

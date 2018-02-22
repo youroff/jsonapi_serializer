@@ -1,5 +1,5 @@
 # Alt JSON API
-[![Build Status](https://travis-ci.org/youroff/alt_jsonapi.svg?branch=master)](https://travis-ci.org/youroff/alt_jsonapi)
+[![Build Status](https://travis-ci.org/youroff/jsonapi_serializer.svg?branch=master)](https://travis-ci.org/youroff/jsonapi_serializer)
 
 JSONApi serializer for Ruby objects. Inspired by [Fast JSON API](https://github.com/Netflix/fast_jsonapi).
 
@@ -19,7 +19,7 @@ JSONApi serializer for Ruby objects. Inspired by [Fast JSON API](https://github.
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'alt_jsonapi'
+gem 'jsonapi_serializer'
 ```
 
 And then execute:
@@ -36,7 +36,7 @@ Records in JSONApi are identified by `type` and `id`. Normally these attributes 
 
 ```ruby
 class MovieSerializer
-  include AltJsonapi::Serializer
+  include JsonapiSerializer::Base
   # Without type hook, type of the record will be derived
   # from the serializer name. In this case it would be :movie
   type :film
@@ -54,30 +54,30 @@ You can use public method `MovieSerializer.new.id_hash(record)` to get identific
 
 ### Types and keys transforms
 
-JSON API spec does not define how exactly `keys` and `types` should be formatted. For example, if you have a model defined in `BlockbusterMovie`, it can be represented by `blockbuster_movie`, `blockbuster-movie` or `blockbusterMovie`, or anything else that makes sense for your application. `AltJsonapi` allows for customization of this behavior, but only globally so far. If you use Ruby on Rails, you can put these settings in `config/initializers/alt_jsonapi.rb`:
+JSON API spec does not define how exactly `keys` and `types` should be formatted. For example, if you have a model defined in `BlockbusterMovie`, it can be represented by `blockbuster_movie`, `blockbuster-movie` or `blockbusterMovie`, or anything else that makes sense for your application. `JsonapiSerializer` allows for customization of this behavior, but only globally so far. If you use Ruby on Rails, you can put these settings in `config/initializers/jsonapi_serializer.rb`:
 
 ```ruby
 # You can pass a symbol matching on of predefined transforms (:underscore, :dasherize or :camelize)
 # or implement your own logic, using block.
 # The following example will convert all attribute keys into dasherized-form:
-AltJsonapi.set_key_transform :dasherize
+JsonapiSerializer.set_key_transform :dasherize
 
 # This will drop all non alphabet characters and upcase everything:
-AltJsonapi.set_key_transform do |str|
+JsonapiSerializer.set_key_transform do |str|
   str.to_s.upcase.gsub(/[^A-Z]/, "").to_sym
 end
 
 # The same applies to type transform:
-AltJsonapi.set_type_transform :camelize
+JsonapiSerializer.set_type_transform :camelize
 
 # There is also still unresolved debate on how to treat namespaces in json-api.
 # For example, you have `Library::AuthorSerializer` and corresponding model.
 # Most of serializers would just drop namespace while trying to retrieve the type.
 # We can either drop it too, or replace `::` with defined separator:
-AltJsonapi.set_type_namespace_separator "-_-"
+JsonapiSerializer.set_type_namespace_separator "-_-"
 
 # Or if you want to ignore (drop) it:
-AltJsonapi.set_type_namespace_separator :ignore
+JsonapiSerializer.set_type_namespace_separator :ignore
 
 # The default option is "_"
 # Bear in mind that only " " (space), "_" and "-" or any combination of these
@@ -91,7 +91,7 @@ Alt JSON API supports direct mapping of attributes, as well as remapping and cus
 
 ```ruby
 class MovieSerializer
-  include AltJsonapi::Serializer
+  include JsonapiSerializer::Base
   # attributes accepts names of attributes
   # and/or pairs (hash) of attributes of serialized model
   # pointing to attributes of target model
@@ -121,7 +121,7 @@ In order to define relationships, you can use `belongs_to` and `has_many` DSL me
 
 ```ruby
 class MovieSerializer
-  include AltJsonapi::Serializer
+  include JsonapiSerializer::Base
   belongs_to :director, serializer: PersonSerializer
   has_many :actors, from: :cast
 end
@@ -132,56 +132,81 @@ From the perspective of serializer, there is no distinction between `belongs_to`
   * Identifier of serialized object (`id`) can be remapped to another attribute, for example `slug`.
   * This library is intended to be ORM-agnostic, you can easily use it to serialize some graph structures.
 
-### Polymorphic relationships
+### Polymorphic models and relationships
 
-Polymorphic serializers can handle objects whose type is unknown in advance. You can use them in relations or standalone. In order to define polymorphic serializer you need to create a root class by including `AltJsonapi::PolymorphicSerializer` and optionally defining `resolver` callback that'll help to determine what is the type of the model you're trying to serialize. There is an implicit resolver that applies `AltJsonapi.type_transform` to the record class name.
+There are two kinds of polymorphism that `jsonapi_serializer` supports. First is polymorphic model (STI models in ActiveRecord), where most attributes are shared, but children have different types. Ultimately it is still one kind of entity: think of `Vehicle` base class inherited by `Car`, `Truck` and `Motorcycle`. Second kind is polymorphic relationship, where one relationship can contain entirely different models. Let's say you have `Post` and `Product`, and both can have comments, hence from the perspective of individual comment it belongs to `Commentable`. Even though `Post` and `Model` can share some attributes, their serializers will be used mostly along from comments.
+
+These types of serializers share most of the implementation implemented similarly, they share most of the logic and both need a `resolver`, which is implicitly defined as a lambda, that applies `JsonapiSerializer.type_transform` to the record class name.
+
+#### Polymorphic Models
+
+To create a serializer for STI models:
 
 ```ruby
-class CommentableSerializer
-  include AltJsonapi::PolymorphicSerializer
-  # You can define common attributes and relations
-  # that will be shared by all nested serializers
-  attributes :title, :date
-  has_many :tags
-  belongs_to :author
+class VehicleSerializer
+  include JsonapiSerializer::Polymorphic
+  attributes :name, :num_of_wheels
+end
 
-  # The resolver takes the model and returns a type of the model.
-  # For safety you might define a fallback case and corresponding fallback serializer
-  # that will inherit its config from polymorphic serializer.
-  resolver do |model|
-    case model
-    when Post then :post
-    when Item then :item
-    else
-      :commentable_fallback
-    end
+class CarSerializer < VehicleSerializer
+  attributes :trunk_volume
+end
+
+class TruckSerializer < VehicleSerializer
+  attributes :bed_size
+end
+
+class MotorcycleSerializer < VehicleSerializer
+end
+```
+
+In this case common attributes will be inherited from `VehicleSerializer` and children will be registered automatically. Optionally you can add a `resolver` to the parent:
+
+```ruby
+resolver do |model|
+  case model
+  when Motorcycle then :motorcycle
+  when Truck then :truck
+  when Car then :car
   end
 end
 ```
 
-Then you need to inherit from the parent class and it'll trigger automatic registration of sublasses at the parent class. So in this example `CommentableSerializer` will just know that it has `PostSerializer`, `ItemSerializer` and `CommentableFallbackSerializer` linked to it.
+But usually you don't need to, the implicit resolver does the same for you. To specify the rules of type transform and how the namespace is treated, read `Types and keys transforms` section.
+
+#### Polymorphic Relationships
+
+With polymorphic relationships we usually have several independent serializers for models that can appear in one relationships. In order to teach polymorphic serializer to use them, we just need to register these classes using `polymorphic_for`.  
 
 ```ruby
-class PostSerializer < CommentableSerializer
-  # You can define additional attributes and relations in child serializer
-  # and it will be merged.
-  attributes :body
+class CommentableSerializer
+  include JsonapiSerializer::Polymorphic
+  # Here we register standalone serializers
+  # as targets for our polymorphic relationship.
+  # Be aware that in this case attributes will have no effect.
+  polymorphic_for PostSerializer, ProductSerializer
+
+  # You can set up a resolver here as well!
 end
 
-class ItemSerializer < CommentableSerializer
-  attributes :description
+class PostSerializer
+  include JsonapiSerializer::Base
+  attributes :title, :body
 end
 
-class CommentableFallbackSerializer < CommentableSerializer; end
+class ProductSerializer
+  include JsonapiSerializer::Base
+  attributes :sku, :name, :description
+end
 ```
 
-Then use it exactly the same as regular serializers. You shouldn't use children serializers directly. Also you cannot randomly inherit serializer classes, an attempt to inherit regular serializer's class will cause an error.
+Then use it exactly the same as regular serializers. But keep in mind that you cannot randomly inherit serializer classes, an attempt to inherit regular serializer's class will cause an error.
 
 ### Initialization and serialization
 
 Once serializers are defined, you can instantiate them with several options. Currently supported options are: `fields` and `include`.
 
-`fields` must be a hash, where keys represent record types and values are list of attributes and relationships of the corresponding type that will be present in serialized object. If some type is missing, that means all attributes and relationships defined in serializer will be serialized. In case of `polymorphic` serializer, you can supply shared fields under polymorphic type. **_There is a caveat, though: if you define a fieldset for a parent polymorphic class and omit fieldsets for subclasses it will be considered that you did not want any of attributes and relationships defined in subclass to be serialized._**  
+`fields` must be a hash, where keys represent record types and values are list of attributes and relationships of the corresponding type that will be present in serialized object. If some type is missing, that means all attributes and relationships defined in serializer will be serialized. In case of `polymorphic` serializer, you can supply shared fields under polymorphic type. **_There is a caveat, though: if you define a fieldset for a parent polymorphic class and omit fieldsets for subclasses it will be considered that you did not want any of attributes and relationships defined in subclass to be serialized._** It works the same fashion for polymorphic relationships, so if you want only `title` from `Post` and `name` from `Product`, you can supply `{commentable: ["title", "name"]}` as a `fields` parameter for `CommentableSerializer`.
 
 `include` defines an arbitrary depth tree of included relationships in a similar way as ActiveRecord's `includes`. Bear in mind that `fields` has precedence, which means that if some relationship is missing in fields, it will not be included either.  
 
@@ -218,14 +243,14 @@ By running `bin/benchmark` you can launch performance test locally, however numb
 
 |       Adapters       |  10 hash/json (ms)   |  100 hash/json (ms)  | 1000 hash/json (ms)  | 10000 hash/json (ms) |
 | -------------------- |:--------------------:|:--------------------:|:--------------------:|:--------------------:|
-|    AltJsonapiTest    |     0.36 / 1.17      |     1.55 / 1.98      |    13.74 / 20.18     |   156.31 / 208.86    |
+|    JsonapiSerializerTest    |     0.36 / 1.17      |     1.55 / 1.98      |    13.74 / 20.18     |   156.31 / 208.86    |
 |   FastJsonapiTest    |     0.16 / 0.19      |     1.14 / 1.75      |    11.86 / 18.13     |   124.13 / 176.97    |
 
 ### With includes
 
 |       Adapters       |  10 hash/json (ms)   |  100 hash/json (ms)  | 1000 hash/json (ms)  | 10000 hash/json (ms) |
 | -------------------- |:--------------------:|:--------------------:|:--------------------:|:--------------------:|
-|    AltJsonapiTest    |     0.51 / 0.46      |     2.05 / 2.50      |    15.28 / 21.59     |   159.89 / 214.49    |
+|    JsonapiSerializerTest    |     0.51 / 0.46      |     2.05 / 2.50      |    15.28 / 21.59     |   159.89 / 214.49    |
 |   FastJsonapiTest    |     0.26 / 0.25      |     2.01 / 2.47      |    15.54 / 20.11     |   154.82 / 211.48    |
 
 Performance tests do not include any advanced features, such as fieldsets, nested includes or polymorphic serializers, and were mostly intended to make sure that adding these features did not make serializer slower (or at least significantly slower), but there are models prepared to extend these tests. PRs are welcome.
@@ -233,7 +258,7 @@ Performance tests do not include any advanced features, such as fieldsets, neste
 ## Roadmap
 
   * Removing as many dependencies as possible. Opt-in JSON-library. Possibly removing dependency on `active_support`.
-  * Creating alt_jsonapi_rails to make rails integration simple
+  * Creating jsonapi_serializer_rails to make rails integration simple
   * ...
 
 ## Development
@@ -244,7 +269,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/alt_jsonapi. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/jsonapi_serializer. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
 
 ## License

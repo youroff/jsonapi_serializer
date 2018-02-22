@@ -1,9 +1,8 @@
 require 'active_support/core_ext/object'
 require 'active_support/concern'
 require 'multi_json'
-require 'oj'
 
-module AltJsonapi::Common
+module JsonapiSerializer::Common
   extend ActiveSupport::Concern
 
   def initialize(opts = {})
@@ -36,7 +35,7 @@ module AltJsonapi::Common
   private
   def guess_type
     if self.class.name.end_with?('Serializer')
-      AltJsonapi.type_transform(self.class.name.chomp('Serializer'))
+      JsonapiSerializer.type_transform(self.class.name.chomp('Serializer'))
     else
       raise "Serializer class must end with `Serializer` in order to be able to guess type"
     end

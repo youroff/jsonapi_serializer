@@ -1,11 +1,11 @@
-require "alt_jsonapi/version"
-require "alt_jsonapi/aux/converters"
-require "alt_jsonapi/serializer"
-require "alt_jsonapi/polymorphic_serializer"
 require "active_support/inflector"
+require "jsonapi_serializer/version"
+require "jsonapi_serializer/aux/converters"
+require "jsonapi_serializer/base"
+require "jsonapi_serializer/polymorphic"
 
-module AltJsonapi
-  extend AltJsonapi::AUX::Converters
+module JsonapiSerializer
+  extend JsonapiSerializer::AUX::Converters
 
   TRANSFORMS = {
     dasherize: lambda { |str| str.to_s.underscore.dasherize.to_sym },
@@ -41,11 +41,7 @@ module AltJsonapi
   end
 
   def self.set_type_namespace_separator(separator)
-    if separator == :ignore || separator =~ /^( |-|_)+$/
-      @@type_namespace_separator = separator
-    else
-      raise ArgumentError, "namespace separator can only contain spaces (not recommended), dashes or underscores"
-    end
+    @@type_namespace_separator = separator
   end
 
   def self.set_type_transform(name = nil, &block)

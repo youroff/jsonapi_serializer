@@ -1,15 +1,15 @@
 require 'active_support/core_ext/object'
 require 'active_support/concern'
-require 'alt_jsonapi/dsl/common'
-require 'alt_jsonapi/utils'
-require 'alt_jsonapi/common'
+require 'jsonapi_serializer/dsl/common'
+require 'jsonapi_serializer/utils'
+require 'jsonapi_serializer/common'
 require 'set'
 
-module AltJsonapi::Serializer
+module JsonapiSerializer::Base
   extend ActiveSupport::Concern
-  include AltJsonapi::DSL::Common
-  include AltJsonapi::Utils
-  include AltJsonapi::Common
+  include JsonapiSerializer::DSL::Common
+  include JsonapiSerializer::Utils
+  include JsonapiSerializer::Common
 
   def initialize(opts = {})
     super(opts)
@@ -69,7 +69,7 @@ module AltJsonapi::Serializer
   def prepare_fields(opts)
     @fields = opts.fetch(:fields, {})
     if opts[:poly_fields].present? || @fields[@type].present?
-      @fields[@type] = opts.fetch(:poly_fields, []) + [*@fields.fetch(@type, [])].map { |f| AltJsonapi.key_transform(f) }
+      @fields[@type] = opts.fetch(:poly_fields, []) + [*@fields.fetch(@type, [])].map { |f| JsonapiSerializer.key_transform(f) }
       @fields[@type].uniq!
     end
   end

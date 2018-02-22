@@ -1,16 +1,16 @@
 require 'active_support/core_ext/object'
 require 'active_support/concern'
 require 'multi_json'
-require 'alt_jsonapi/dsl/polymorphic'
-require 'alt_jsonapi/utils'
-require 'alt_jsonapi/common'
+require 'jsonapi_serializer/dsl/polymorphic'
+require 'jsonapi_serializer/utils'
+require 'jsonapi_serializer/common'
 require 'set'
 
-module AltJsonapi::PolymorphicSerializer
+module JsonapiSerializer::Polymorphic
   extend ActiveSupport::Concern
-  include AltJsonapi::DSL::Polymorphic
-  include AltJsonapi::Utils
-  include AltJsonapi::Common
+  include JsonapiSerializer::DSL::Polymorphic
+  include JsonapiSerializer::Utils
+  include JsonapiSerializer::Common
 
   def initialize(opts = {})
     super(opts)
@@ -19,7 +19,7 @@ module AltJsonapi::PolymorphicSerializer
         raise "Polymorphic serializer must implement a block resolving an object into type."
       end
 
-      poly_fields = [*opts.dig(:fields, @type)].map { |f| AltJsonapi.key_transform(f) }
+      poly_fields = [*opts.dig(:fields, @type)].map { |f| JsonapiSerializer.key_transform(f) }
       if self.class.meta_poly.present?
         @poly = self.class.meta_poly.each_with_object({}) do |poly_class, hash|
           serializer = poly_class.new(opts.merge poly_fields: poly_fields)

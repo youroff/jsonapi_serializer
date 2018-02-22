@@ -4,7 +4,7 @@ require 'digest'
 
 class Runner
 
-  WIDTH = 20
+  WIDTH = 24
 
   def initialize(count)
     @repo = Models.new(count)

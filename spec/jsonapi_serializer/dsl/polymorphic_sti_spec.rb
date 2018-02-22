@@ -1,11 +1,11 @@
 require "spec_helper"
 
-describe AltJsonapi::DSL::Polymorphic do
+describe JsonapiSerializer::DSL::Polymorphic, "STI style" do
   class FruitSerializer; end
   class OwnerSerializer; end
 
-  class PolymorphicSerializer
-    include AltJsonapi::DSL::Polymorphic
+  class Polymorphic
+    include JsonapiSerializer::DSL::Polymorphic
     attributes :one
     has_many :fruits
     id { |obj| obj.slug }
@@ -17,27 +17,27 @@ describe AltJsonapi::DSL::Polymorphic do
     end
   end
 
-  class TypeASerializer < PolymorphicSerializer
+  class TypeASerializer < Polymorphic
     attributes :two
     belongs_to :owner
   end
 
-  class TypeBSerializer < PolymorphicSerializer
+  class TypeBSerializer < Polymorphic
     attributes :two, :three
   end
 
   it "registers children" do
-    expect(PolymorphicSerializer.meta_poly).to contain_exactly(TypeASerializer, TypeBSerializer)
+    expect(Polymorphic.meta_poly).to contain_exactly(TypeASerializer, TypeBSerializer)
   end
 
   it "inherits parents attributes" do
-    expect(PolymorphicSerializer.meta_attributes.keys).to contain_exactly(:one)
+    expect(Polymorphic.meta_attributes.keys).to contain_exactly(:one)
     expect(TypeASerializer.meta_attributes.keys).to contain_exactly(:one, :two)
     expect(TypeBSerializer.meta_attributes.keys).to contain_exactly(:one, :two, :three)
   end
 
   it "inherits parents relationships" do
-    expect(PolymorphicSerializer.meta_relationships.keys).to contain_exactly(:fruits)
+    expect(Polymorphic.meta_relationships.keys).to contain_exactly(:fruits)
     expect(TypeASerializer.meta_relationships.keys).to contain_exactly(:fruits, :owner)
     expect(TypeBSerializer.meta_relationships.keys).to contain_exactly(:fruits)
   end

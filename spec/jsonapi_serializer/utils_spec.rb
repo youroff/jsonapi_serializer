@@ -1,8 +1,8 @@
 require "spec_helper"
 
-describe AltJsonapi::Utils do
+describe JsonapiSerializer::Utils do
   before(:all) {
-    @probe = Class.new.extend(AltJsonapi::Utils)
+    @probe = Class.new.extend(JsonapiSerializer::Utils)
   }
 
   it "normalize_includes" do

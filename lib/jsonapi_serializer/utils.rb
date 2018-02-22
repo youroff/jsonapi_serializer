@@ -1,4 +1,4 @@
-module AltJsonapi::Utils
+module JsonapiSerializer::Utils
 
   def normalize_includes(includes)
     case includes

@@ -1,4 +1,4 @@
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in alt_jsonapi.gemspec
+# Specify your gem's dependencies in jsonapi_serializer.gemspec
 gemspec

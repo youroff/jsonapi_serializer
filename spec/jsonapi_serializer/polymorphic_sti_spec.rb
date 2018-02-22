@@ -1,10 +1,10 @@
 require "spec_helper"
 require 'ostruct'
 
-describe AltJsonapi::PolymorphicSerializer do
+describe JsonapiSerializer::Polymorphic, "STI style" do
   before(:each) {
     class AnimalSerializer
-      include AltJsonapi::PolymorphicSerializer
+      include JsonapiSerializer::Polymorphic
       attributes :name
     end
 
@@ -17,7 +17,7 @@ describe AltJsonapi::PolymorphicSerializer do
     end
 
     class ZooSerializer
-      include AltJsonapi::Serializer
+      include JsonapiSerializer::Base
       attributes :name, :address
       has_many :animals
     end

@@ -1,8 +1,8 @@
 require "spec_helper"
 
-describe AltJsonapi::DSL::Common, "attributes" do
+describe JsonapiSerializer::DSL::Common, "attributes" do
   class AttributeSerializer
-    include AltJsonapi::DSL::Common
+    include JsonapiSerializer::DSL::Common
     attributes :simple, renamed: :original
     attribute :custom do |record|
       record.custom_operation
@@ -21,16 +21,16 @@ describe AltJsonapi::DSL::Common, "attributes" do
   it "raises if regular serializer is inherited" do
     expect {
       class InheritedSerializer < AttributeSerializer; end
-    }.to raise_error(RuntimeError, "You attempted to inherit regular serializer class, if you want to create Polymorphic serializer, include PolymorphicSerializer mixin")
+    }.to raise_error(RuntimeError, "You attempted to inherit regular serializer class, if you want to create Polymorphic serializer, include Polymorphic mixin")
   end
 end
 
-describe AltJsonapi::DSL::Common, "relationships" do
+describe JsonapiSerializer::DSL::Common, "relationships" do
   class CharacterSerializer; end
   class WriterSerializer; end
 
   class BookSerializer
-    include AltJsonapi::DSL::Common
+    include JsonapiSerializer::DSL::Common
     has_many :characters, from: :heroes
     belongs_to :author, serializer: WriterSerializer
   end
@@ -50,14 +50,14 @@ describe AltJsonapi::DSL::Common, "relationships" do
   end
 end
 
-describe AltJsonapi::DSL::Common, "type" do
+describe JsonapiSerializer::DSL::Common, "type" do
   class ModelSerializer
-    include AltJsonapi::DSL::Common
+    include JsonapiSerializer::DSL::Common
     type :modello
   end
 
   class SuperModelSerializer
-    include AltJsonapi::DSL::Common
+    include JsonapiSerializer::DSL::Common
     type "super_modello"
   end
 

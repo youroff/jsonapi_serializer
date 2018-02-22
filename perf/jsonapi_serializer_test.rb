@@ -1,20 +1,20 @@
-require 'alt_jsonapi'
+require 'jsonapi_serializer'
 
-module AltJsonapiTest
-  AltJsonapi.set_type_namespace_separator :ignore
+module JsonapiSerializerTest
+  JsonapiSerializer.set_type_namespace_separator :ignore
 
   class AuthorSerializer
-    include AltJsonapi::Serializer
+    include JsonapiSerializer::Base
     attributes :name, :age
   end
 
   class CharacterSerializer
-    include AltJsonapi::Serializer
+    include JsonapiSerializer::Base
     attributes :name
   end
 
   class BookSerializer
-    include AltJsonapi::Serializer
+    include JsonapiSerializer::Base
     attributes :name, :isbn, :year
     belongs_to :author, serializer: AuthorSerializer
     has_many :characters, serializer: CharacterSerializer

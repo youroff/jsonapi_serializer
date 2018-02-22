@@ -1,14 +1,14 @@
 require 'active_support/concern'
-require 'alt_jsonapi/dsl/common'
+require 'jsonapi_serializer/dsl/common'
 
-module AltJsonapi::DSL
+module JsonapiSerializer::DSL
   module Polymorphic
     extend ActiveSupport::Concern
-    include AltJsonapi::DSL::Common
+    include JsonapiSerializer::DSL::Common
 
     included do
       @meta_poly = []
-      @meta_resolver = lambda { |record| AltJsonapi.type_transform(record.class.name) }
+      @meta_resolver = lambda { |record| JsonapiSerializer.type_transform(record.class.name) }
 
       class << self
         attr_reader :meta_poly, :meta_resolver, :meta_inherited
@@ -24,10 +24,14 @@ module AltJsonapi::DSL
         end
       end
 
+      def polymorphic_for(*serializers)
+        @meta_poly += serializers
+      end
+
       def inherited(subclass)
         parent = self
         subclass.class_eval do
-          include AltJsonapi::Serializer
+          include JsonapiSerializer::Base
           @meta_attributes = parent.meta_attributes.clone
           @meta_relationships = parent.meta_relationships.clone
           @meta_id = parent.meta_id

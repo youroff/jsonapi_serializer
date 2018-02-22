@@ -1,9 +1,9 @@
 require "spec_helper"
 
-describe AltJsonapi::Serializer do
+describe JsonapiSerializer::Base do
   before(:each) {
     class ASerializer
-      include AltJsonapi::Serializer
+      include JsonapiSerializer::Base
       attributes :a, b: :c
       attribute :d do |object|
         object.e
@@ -45,12 +45,12 @@ describe AltJsonapi::Serializer do
 
   it "serializes relationships and selected includes" do
     class XSerializer
-      include AltJsonapi::Serializer
+      include JsonapiSerializer::Base
       attributes :z, :ignored
     end
 
     class YSerializer
-      include AltJsonapi::Serializer
+      include JsonapiSerializer::Base
     end
 
     ASerializer.class_eval do
@@ -84,12 +84,12 @@ describe AltJsonapi::Serializer do
   it "does not include records that appear in the main collection (circular relations)" do
     class SSerializer; end
     class TSerializer
-      include AltJsonapi::Serializer
+      include JsonapiSerializer::Base
       has_many :ss, serializer: SSerializer
     end
 
     SSerializer.class_eval do
-      include AltJsonapi::Serializer
+      include JsonapiSerializer::Base
       belongs_to :t
     end
 
