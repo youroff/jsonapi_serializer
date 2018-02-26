@@ -22,6 +22,12 @@ module JsonapiSerializer::Utils
     end
   end
 
+  def normalize_fields(fields)
+    fields.each_with_object({}) do |(type, attributes), hash|
+      hash[type.to_sym] = [*attributes].map(&:to_sym)
+    end
+  end
+
   def apply_splat(item, &block)
     if item.is_a? Array
       item.map { |i| block.call(i) }

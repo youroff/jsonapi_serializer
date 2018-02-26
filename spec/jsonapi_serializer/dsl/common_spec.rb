@@ -21,7 +21,7 @@ describe JsonapiSerializer::DSL::Common, "attributes" do
   it "raises if regular serializer is inherited" do
     expect {
       class InheritedSerializer < AttributeSerializer; end
-    }.to raise_error(RuntimeError, "You attempted to inherit regular serializer class, if you want to create Polymorphic serializer, include Polymorphic mixin")
+    }.to raise_error(RuntimeError, "You attempted to inherit from AttributeSerializer, if you want to create Polymorphic serializer, include JsonapiSerializer::Polymorphic")
   end
 end
 
@@ -37,16 +37,15 @@ describe JsonapiSerializer::DSL::Common, "relationships" do
 
   it "defines relationships" do
     expect(BookSerializer.meta_relationships.length).to eq 2
+    dummy = OpenStruct.new(heroes: "heroes", author: "author")
 
     has_many = BookSerializer.meta_relationships[:characters]
-    expect(has_many[:serializer]).to eq CharacterSerializer
-    expect(has_many[:type]).to eq :has_many
-    expect(has_many[:from]).to eq :heroes
+    expect(has_many[:serializer]).to eq "CharacterSerializer"
+    expect(has_many[:from].call(dummy)).to eq "heroes"
 
     belongs_to = BookSerializer.meta_relationships[:author]
-    expect(belongs_to[:serializer]).to eq WriterSerializer
-    expect(belongs_to[:type]).to eq :belongs_to
-    expect(belongs_to[:from]).to eq :author
+    expect(belongs_to[:serializer]).to eq "WriterSerializer"
+    expect(belongs_to[:from].call(dummy)).to eq "author"
   end
 end
 

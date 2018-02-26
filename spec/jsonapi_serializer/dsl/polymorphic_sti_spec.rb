@@ -27,7 +27,7 @@ describe JsonapiSerializer::DSL::Polymorphic, "STI style" do
   end
 
   it "registers children" do
-    expect(Polymorphic.meta_poly).to contain_exactly(TypeASerializer, TypeBSerializer)
+    expect(Polymorphic.meta_poly).to contain_exactly("TypeASerializer", "TypeBSerializer")
   end
 
   it "inherits parents attributes" do
@@ -46,5 +46,11 @@ describe JsonapiSerializer::DSL::Polymorphic, "STI style" do
     object = double("object", slug: "yay")
     expect(TypeASerializer.meta_id).to eq TypeBSerializer.meta_id
     expect(TypeASerializer.meta_id.call(object)).to eq "yay"
+  end
+
+  it "provides resolver" do
+    class TypeA; end
+
+    expect(Polymorphic.meta_resolver.call(TypeA.new)).to eq :type_a
   end
 end

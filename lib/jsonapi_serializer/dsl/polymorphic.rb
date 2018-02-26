@@ -25,7 +25,7 @@ module JsonapiSerializer::DSL
       end
 
       def polymorphic_for(*serializers)
-        @meta_poly += serializers
+        @meta_poly += serializers.map(&:to_s)
       end
 
       def inherited(subclass)
@@ -37,7 +37,7 @@ module JsonapiSerializer::DSL
           @meta_id = parent.meta_id
           @meta_inherited = true
         end
-        @meta_poly << subclass
+        @meta_poly << subclass.to_s
       end
     end
   end

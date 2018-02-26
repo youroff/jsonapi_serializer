@@ -15,14 +15,10 @@ module JsonapiSerializer::Polymorphic
   def initialize(opts = {})
     super(opts)
     unless self.class.meta_inherited
-      unless self.class.meta_resolver.respond_to? :call
-        raise "Polymorphic serializer must implement a block resolving an object into type."
-      end
-
       poly_fields = [*opts.dig(:fields, @type)].map { |f| JsonapiSerializer.key_transform(f) }
       if self.class.meta_poly.present?
         @poly = self.class.meta_poly.each_with_object({}) do |poly_class, hash|
-          serializer = poly_class.new(opts.merge poly_fields: poly_fields)
+          serializer = poly_class.constantize.new(opts.merge poly_fields: poly_fields)
           hash[serializer.type] = serializer
         end
       else
@@ -57,6 +53,10 @@ module JsonapiSerializer::Polymorphic
 
   private
   def serializer_for(record)
-    @poly[self.class.meta_resolver.call(record)] || (raise "Could not resolve serializer for #{record} associated with #{self.class.name}")
+    if serializer = @poly[self.class.meta_resolver.call(record)]
+      serializer
+    else
+     raise "Could not resolve serializer for #{record} associated with #{self.class.name}"
+    end
   end
 end

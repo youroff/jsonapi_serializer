@@ -2,6 +2,7 @@
 
 require "bundler/setup"
 require "jsonapi_serializer"
+require "ruby-prof"
 require "./perf/runner"
 require "./perf/jsonapi_serializer_test"
 require "./perf/fast_jsonapi_test"
@@ -11,7 +12,10 @@ runner = Runner.new(10_000)
 runner.set_modules(JsonapiSerializerTest, FastJsonapiTest)
 runner.set_tests(:base, :with_included)
 runner.set_takes(10, 100, 1000, 10_000)
-runner.run
+
+# result = RubyProf.profile do
+  runner.run
+# end
 
 print "\n"
 print "### Base case\n"
@@ -21,3 +25,7 @@ print "\n"
 print "### With includes\n"
 print "\n"
 runner.print_table(:with_included)
+#
+# # print a graph profile to text
+# printer = RubyProf::GraphPrinter.new(result)
+# printer.print(STDOUT, {})

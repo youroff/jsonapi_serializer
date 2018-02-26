@@ -11,6 +11,9 @@ module JsonapiSerializer::DSL
       @meta_relationships = {}
 
       class << self
+        alias_method :has_many, :relationship
+        alias_method :belongs_to, :relationship
+
         attr_reader :meta_type, :meta_id, :meta_attributes, :meta_relationships
       end
     end
@@ -35,7 +38,7 @@ module JsonapiSerializer::DSL
         attrs.each do |attr|
           case attr
           when Symbol, String
-            @meta_attributes[attr.to_sym] = lambda { |obj| obj.public_send(attr.to_sym) }
+            @meta_attributes[attr.to_sym] = lambda { |obj| obj.public_send(attr) }
           when Hash
             attr.each do |key, val|
               @meta_attributes[key] = lambda { |obj| obj.public_send(val) }
@@ -45,32 +48,21 @@ module JsonapiSerializer::DSL
       end
 
       def attribute(attr, &block)
-        @meta_attributes[attr.to_sym] = block
+        @meta_attributes[attr.to_sym] = block_given? ? block : lambda { |obj| obj.public_send(attr) }
       end
 
-      def has_many(name, opts = {})
-        @meta_relationships[name] = {
-          type: :has_many,
-          from: opts.fetch(:from, name),
-          serializer: opts[:serializer] || guess_serializer(name.to_s.singularize)
-        }
-      end
+      def relationship(name, opts = {})
+        @meta_relationships[name.to_sym] = {}.tap do |relationship|
+          from = opts.fetch(:from, name)
+          relationship[:from] = from.respond_to?(:call) ? from : lambda { |r| r.public_send(from) }
 
-      def belongs_to(name, opts = {})
-        @meta_relationships[name] = {
-          type: :belongs_to,
-          from: opts.fetch(:from, name),
-          serializer: opts[:serializer] || guess_serializer(name.to_s)
-        }
+          serializer = opts[:serializer]
+          relationship[:serializer] = serializer ? serializer.to_s : "#{name.to_s.singularize.classify}Serializer"
+        end
       end
 
       def inherited(subclass)
-        raise "You attempted to inherit regular serializer class, if you want to create Polymorphic serializer, include Polymorphic mixin"
-      end
-
-      private
-      def guess_serializer(name)
-        "#{name.classify}Serializer".constantize
+        raise "You attempted to inherit from #{self.name}, if you want to create Polymorphic serializer, include JsonapiSerializer::Polymorphic"
       end
     end
   end

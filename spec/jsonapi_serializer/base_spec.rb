@@ -1,4 +1,5 @@
 require "spec_helper"
+require "ruby-prof"
 
 describe JsonapiSerializer::Base do
   before(:each) {
@@ -24,8 +25,19 @@ describe JsonapiSerializer::Base do
   after(:each) { Object.send(:remove_const, "ASerializer") }
 
   it "serializes parts properly" do
-    hash = ASerializer.new(fields: {a: [:a, :b, :d]}).serializable_hash(@record)
+    serializer = ASerializer.new(fields: {a: [:a, :b, :d]})
+    hash = nil
+    # result = RubyProf.profile do
+      hash = serializer.serializable_hash(@record)
+    # end
     expect(hash[:data]).to include(id: "1", type: :a, attributes: Hash[[:a, :b, :d].map {|x| [x, x]}])
+    # RubyProf.measure_mode = RubyProf::MEMORY
+    # result = RubyProf.profile do
+    #   hash = serializer.attributes_hash(@record)
+    # end
+    #
+    # printer = RubyProf::GraphPrinter.new(result)
+    # printer.print(STDOUT, {})
   end
 
   it "allows to remap id and type" do

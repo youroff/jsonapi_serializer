@@ -36,7 +36,7 @@ describe JsonapiSerializer::Polymorphic, "STI style" do
   }
 
   it "serializes parts properly" do
-    serializer = ZooSerializer.new(include: [:animals])
+    serializer = ZooSerializer.new(include: [:animals], fields: {animal: [:name], bird: [:wing_span]})
 
     eagle = Bird.new(id: 1, name: "Eagle", wing_span: 7)
     carp = Fish.new(id: 2, name: "Carp", fin_count: 8)
@@ -49,7 +49,7 @@ describe JsonapiSerializer::Polymorphic, "STI style" do
     expect(hash[:included].length).to eq 2
 
     eagle_hash = {id: "1", type: :bird, attributes: {name: "Eagle", wing_span: 7}}
-    carp_hash = {id: "2", type: :fish, attributes: {name: "Carp", fin_count: 8}}
+    carp_hash = {id: "2", type: :fish, attributes: {name: "Carp"}}
     expect(hash[:included]).to contain_exactly(eagle_hash, carp_hash)
   end
 end

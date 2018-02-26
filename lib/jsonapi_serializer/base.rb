@@ -15,12 +15,15 @@ module JsonapiSerializer::Base
     super(opts)
     @id = self.class.meta_id
     unless opts[:id_only]
-      @attributes = []
-      @relationships = []
-      @includes = normalize_includes(opts.fetch(:include, []))
-      prepare_fields(opts)
-      prepare_attributes
-      prepare_relationships
+      fields = normalize_fields(opts.fetch(:fields, {}))
+      if opts[:poly_fields].present?
+        fields[@type] = fields.fetch(@type, []) + opts[:poly_fields]
+      end
+
+      includes = normalize_includes(opts.fetch(:include, {}))
+
+      prepare_attributes(fields)
+      prepare_relationships(fields, includes)
     end
   end
 
@@ -35,19 +38,15 @@ module JsonapiSerializer::Base
   end
 
   def relationships_hash(record, context = {})
-    @relationships.each_with_object({}) do |(key, type, from, serializer), hash|
-      if rel = record.public_send(from)
-        if rel.respond_to?(:each)
-          hash[key] = {data: []}
-          rel.each do |item|
-            id = serializer.id_hash(item)
-            hash[key][:data] << id
-            add_included(serializer, item, id, context) if @includes.has_key?(key)
+    @relationships.each_with_object({}) do |(key, from, serializer, included), hash|
+      if relation = from.call(record)
+        if relation.respond_to?(:map)
+          relation_ids = relation.map do |item|
+            process_relation(item, serializer, context, included)
           end
+          hash[key] = {data: relation_ids}
         else
-          id = serializer.id_hash(rel)
-          hash[key] = {data: id}
-          add_included(serializer, rel, id, context) if @includes.has_key?(key)
+          hash[key] = {data: process_relation(relation, serializer, context, included)}
         end
       else
         hash[key] = {data: nil}
@@ -66,34 +65,37 @@ module JsonapiSerializer::Base
   end
 
   private
-  def prepare_fields(opts)
-    @fields = opts.fetch(:fields, {})
-    if opts[:poly_fields].present? || @fields[@type].present?
-      @fields[@type] = opts.fetch(:poly_fields, []) + [*@fields.fetch(@type, [])].map { |f| JsonapiSerializer.key_transform(f) }
-      @fields[@type].uniq!
+  def prepare_attributes(all_fields)
+    @attributes = []
+    fields = all_fields[@type]
+    self.class.meta_attributes.each do |attribute, getter|
+      key = JsonapiSerializer.key_transform(attribute)
+      if fields.nil? || fields.include?(key)
+        @attributes << [key, getter]
+      end
     end
   end
 
-  def prepare_attributes
-    key_intersect(@fields[@type], self.class.meta_attributes.keys).each do |key|
-      @attributes << [key, self.class.meta_attributes[key]]
+  def prepare_relationships(all_fields, includes)
+    @relationships = []
+    relations = all_fields[@type]
+    self.class.meta_relationships.each do |relation, cfg|
+      key = JsonapiSerializer.key_transform(relation)
+      if relations.nil? || relations.include?(key)
+        included = includes.has_key?(relation)
+        serializer = cfg[:serializer].to_s.constantize.new(
+          fields: all_fields,
+          include: includes.fetch(relation, {}),
+          id_only: !included
+        )
+        @relationships << [relation, cfg[:from], serializer, included]
+      end
     end
   end
 
-  def prepare_relationships
-    key_intersect(@fields[@type], self.class.meta_relationships.keys).each do |key|
-      rel = self.class.meta_relationships[key]
-      serializer = rel[:serializer].new(
-        fields: @fields,
-        include: @includes.fetch(key, []),
-        id_only: !@includes.has_key?(key)
-      )
-      @relationships << [key, rel[:type], rel[:from], serializer]
-    end
-  end
-
-  def add_included(serializer, item, id, context)
-    if (context[:tracker][id[:type]] ||= Set.new).add?(id[:id]).present?
+  def process_relation(item, serializer, context, included)
+    id = serializer.id_hash(item)
+    if included && (context[:tracker][id[:type]] ||= Set.new).add?(id[:id]).present?
       attributes = serializer.attributes_hash(item)
       relationships = serializer.relationships_hash(item, context)
       inc = id.clone
@@ -101,5 +103,6 @@ module JsonapiSerializer::Base
       inc[:relationships] = relationships if relationships.present?
       context[:included] << inc
     end
+    id
   end
 end

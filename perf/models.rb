@@ -1,7 +1,7 @@
 require 'ffaker'
 
 class Book
-  attr_accessor :id, :name, :isbn, :year, :author, :author_id, :characters, :character_ids, :librarians, :librarian_ids
+  attr_accessor :id, :name, :isbn, :year, :author, :author_id, :characters, :character_ids
 
   @characters = []
   @character_ids = []
