@@ -7,6 +7,7 @@ require "./perf/runner"
 require "./perf/jsonapi_serializer_test"
 require "./perf/fast_jsonapi_test"
 GC.disable
+# RubyProf.measure_mode = RubyProf::WALL_TIME
 
 runner = Runner.new(10_000)
 runner.set_modules(JsonapiSerializerTest, FastJsonapiTest)
@@ -25,7 +26,6 @@ print "\n"
 print "### With includes\n"
 print "\n"
 runner.print_table(:with_included)
-#
-# # print a graph profile to text
+
 # printer = RubyProf::GraphPrinter.new(result)
 # printer.print(STDOUT, {})

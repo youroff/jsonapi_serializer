@@ -50,7 +50,6 @@ describe JsonapiSerializer::DSL::Polymorphic, "STI style" do
 
   it "provides resolver" do
     class TypeA; end
-
     expect(Polymorphic.meta_resolver.call(TypeA.new)).to eq :type_a
   end
 end
